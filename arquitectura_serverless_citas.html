@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Citas de acudientes: arquitectura serverless en AWS</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;600;800&display=swap">
+<style>
+:root{
+  --bg:#F6F8F7; --ink:#14231F; --mute:#52625D; --line:#5B6B66; --rule:#D5DDDA;
+  --user-f:#EEF1FA; --user-s:#3B52A3;
+  --front-f:#E4F4EE; --front-s:#1F7A5C;
+  --auth-f:#FBEFD9; --auth-s:#A8680F;
+  --api-f:#F0E8F7; --api-s:#7A4BA8;
+  --comp-f:#FDE9E1; --comp-s:#B8481F;
+  --data-f:#E3F0F9; --data-s:#1F6C9C;
+  --noti-f:#F9E6EE; --noti-s:#A1305F;
+  color-scheme:light;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0F1715; --ink:#E7EFEC; --mute:#9DB0AA; --line:#8CA09A; --rule:#26332F;
+    --user-f:#1B2238; --user-s:#8FA3F0;
+    --front-f:#12302A; --front-s:#5CCBA2;
+    --auth-f:#33270F; --auth-s:#E6B25A;
+    --api-f:#2A1D38; --api-s:#C39BEB;
+    --comp-f:#38200F; --comp-s:#F29467;
+    --data-f:#10293A; --data-s:#6CB8E8;
+    --noti-f:#38152A; --noti-s:#EE89B5;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0F1715; --ink:#E7EFEC; --mute:#9DB0AA; --line:#8CA09A; --rule:#26332F;
+  --user-f:#1B2238; --user-s:#8FA3F0;
+  --front-f:#12302A; --front-s:#5CCBA2;
+  --auth-f:#33270F; --auth-s:#E6B25A;
+  --api-f:#2A1D38; --api-s:#C39BEB;
+  --comp-f:#38200F; --comp-s:#F29467;
+  --data-f:#10293A; --data-s:#6CB8E8;
+  --noti-f:#38152A; --noti-s:#EE89B5;
+  color-scheme:dark;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Schibsted Grotesk",system-ui,-apple-system,"Segoe UI",sans-serif;line-height:1.55}
+main{max-width:1040px;margin:0 auto;padding:40px 20px 56px}
+h1{font-size:clamp(1.9rem,4.5vw,2.9rem);line-height:1.08;font-weight:800;letter-spacing:-.02em;margin:0 0 14px;max-width:18ch}
+.lead{max-width:62ch;color:var(--mute);font-size:1.06rem;margin:0 0 32px}
+.diagram{overflow-x:auto;border:1px solid var(--rule);border-radius:10px;padding:8px}
+.diagram svg{display:block;min-width:820px;width:100%;height:auto}
+.note{font-size:.9rem;color:var(--mute);margin:10px 2px 40px}
+.n rect{stroke-width:1.6}
+.user rect{fill:var(--user-f);stroke:var(--user-s)} .front rect{fill:var(--front-f);stroke:var(--front-s)}
+.auth rect{fill:var(--auth-f);stroke:var(--auth-s)} .api rect{fill:var(--api-f);stroke:var(--api-s)}
+.comp rect{fill:var(--comp-f);stroke:var(--comp-s)} .data rect{fill:var(--data-f);stroke:var(--data-s)}
+.noti rect{fill:var(--noti-f);stroke:var(--noti-s)}
+.opt rect{stroke-dasharray:5 4}
+.t{font-size:14px;font-weight:600;fill:var(--ink);text-anchor:middle}
+.s{font-size:11.5px;fill:var(--mute);text-anchor:middle}
+.e{fill:none;stroke:var(--line);stroke-width:1.5}
+.e.d{stroke-dasharray:5 4}
+.l{font-size:11px;fill:var(--mute)}
+.k{font-size:11px;font-weight:600;fill:var(--front-s)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:36px 40px}
+h2{font-size:1.15rem;margin:0 0 8px;font-weight:600}
+.grid p,.grid li{margin:0 0 10px;color:var(--ink);max-width:60ch}
+.grid ol{padding-left:1.2rem;margin:0}
+.grid ul{padding-left:1.1rem;margin:0}
+code{font-size:.88em;background:var(--rule);padding:1px 5px;border-radius:4px}
+</style>
+</head>
+<body>
+<main>
+<h1>Citas sin cruces, sin servidores</h1>
+<p class="lead">El acudiente reserva desde el celular un horario libre de un profesor. Cada profesor ve solo sus citas. Todo corre en servicios de AWS que cobran por uso, así que no hay máquinas que pagar ni mantener.</p>
+
+<div class="diagram">
+<svg viewBox="0 0 1000 580" role="img" aria-labelledby="dt dd">
+<title id="dt">Arquitectura serverless para citas</title>
+<desc id="dd">El acudiente y el profesor entran a una web en S3 con CloudFront, inician sesión en Cognito y llaman a API Gateway, que invoca una Lambda que guarda las citas en DynamoDB. Un stream de DynamoDB y EventBridge activan otra Lambda que envía avisos por SES y, opcionalmente, WhatsApp.</desc>
+<defs>
+<marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--line)"/></marker>
+</defs>
+
+<!-- flechas -->
+<path class="e" d="M150 152L200 238" marker-end="url(#a)"/>
+<path class="e" d="M150 362L200 276" marker-end="url(#a)"/>
+<path class="e d" d="M275 225V94" marker-end="url(#a)"/>
+<text class="l" x="283" y="165">inicia sesión</text>
+<path class="e" d="M350 257H410" marker-end="url(#a)"/>
+<text class="l" x="380" y="247" text-anchor="middle">HTTPS</text>
+<text class="k" x="165" y="205">en tránsito: HTTPS (TLS)</text>
+<text class="k" x="165" y="335">en tránsito: HTTPS (TLS)</text>
+<path class="e d" d="M350 62H485V225" marker-end="url(#a)"/>
+<text class="l" x="492" y="150">valida el token</text>
+<path class="e" d="M560 257H610" marker-end="url(#a)"/>
+<path class="e" d="M760 257H810" marker-end="url(#a)"/>
+<path class="e" d="M895 289V330H685V400" marker-end="url(#a)"/>
+<text class="l" x="790" y="322" text-anchor="middle">Streams: cita nueva</text>
+<path class="e" d="M560 432H610" marker-end="url(#a)"/>
+<path class="e" d="M760 432H810" marker-end="url(#a)"/>
+<path class="e d" d="M685 464V522H810" marker-end="url(#a)"/>
+
+<!-- nodos -->
+<g class="n user"><rect x="10" y="120" width="140" height="64" rx="8"/><text class="t" x="80" y="146">Acudiente</text><text class="s" x="80" y="164">celular</text></g>
+<g class="n user"><rect x="10" y="330" width="140" height="64" rx="8"/><text class="t" x="80" y="356">Profesor</text><text class="s" x="80" y="374">celular o PC</text></g>
+<g class="n front"><rect x="200" y="225" width="150" height="64" rx="8"/><text class="t" x="275" y="251">CloudFront + S3</text><text class="s" x="275" y="269">web móvil (PWA)</text></g>
+<g class="n auth"><rect x="200" y="30" width="150" height="64" rx="8"/><text class="t" x="275" y="56">Amazon Cognito</text><text class="s" x="275" y="74">login por rol</text></g>
+<g class="n api"><rect x="410" y="225" width="150" height="64" rx="8"/><text class="t" x="485" y="251">API Gateway</text><text class="s" x="485" y="269">HTTP API</text></g>
+<g class="n comp"><rect x="610" y="225" width="150" height="64" rx="8"/><text class="t" x="685" y="251">Lambda · citas</text><text class="s" x="685" y="269">crear, ver, cancelar</text></g>
+<g class="n data"><rect x="810" y="225" width="170" height="64" rx="8"/><text class="t" x="895" y="251">DynamoDB</text><text class="s" x="895" y="269">cita = profesor + horario</text></g>
+<g class="n comp"><rect x="610" y="400" width="150" height="64" rx="8"/><text class="t" x="685" y="426">Lambda · avisos</text><text class="s" x="685" y="444">confirma y recuerda</text></g>
+<g class="n noti"><rect x="410" y="400" width="150" height="64" rx="8"/><text class="t" x="485" y="426">EventBridge</text><text class="s" x="485" y="444">recordatorios</text></g>
+<g class="n noti"><rect x="810" y="400" width="170" height="64" rx="8"/><text class="t" x="895" y="426">Amazon SES</text><text class="s" x="895" y="444">correo a ambos</text></g>
+<g class="n noti opt"><rect x="810" y="490" width="170" height="64" rx="8"/><text class="t" x="895" y="516">WhatsApp (opcional)</text><text class="s" x="895" y="534">End User Messaging</text></g>
+<!-- etiquetas de seguridad -->
+<text class="k" x="275" y="306" text-anchor="middle">en reposo: cifrado S3</text>
+<text class="k" x="885" y="306" text-anchor="end">en reposo: cifrado</text>
+<text class="k" x="895" y="480" text-anchor="middle">en tránsito: TLS</text>
+</svg>
+</div>
+<p class="note">Línea continua: flujo de la cita. Línea punteada: seguridad o pieza opcional. Etiquetas verdes: cifrado en tránsito y en reposo.</p>
+
+<div class="grid">
+<section>
+<h2>Cómo evita los cruces</h2>
+<p>Cada horario de cada profesor es un registro con clave única (<code>profesor + fecha y hora</code>). Al reservar, la Lambda escribe “solo si no existe”.</p>
+<p>Si dos acudientes tocan el mismo horario al mismo tiempo, DynamoDB acepta uno y rechaza el otro. El rechazado ve “ese horario ya se tomó” y elige otro. Por WhatsApp esto depende de que alguien lea a tiempo.</p>
+</section>
+<section>
+<h2>Cada profesor ve las suyas</h2>
+<p>Cognito entrega un token con el rol y el identificador del usuario. La Lambda lo lee y consulta solo las citas de ese profesor; el acudiente consulta solo las suyas mediante un índice por acudiente.</p>
+<p>La coordinación puede tener un tercer rol con vista de todos los profesores.</p>
+</section>
+<section>
+<h2>Seguridad en tránsito</h2>
+<ul>
+<li>Todo el tráfico va por HTTPS. CloudFront redirige HTTP a HTTPS y exige TLS 1.2 o superior; el certificado lo emite ACM sin costo.</li>
+<li>API Gateway solo expone HTTPS y rechaza llamadas sin token válido de Cognito.</li>
+<li>Entre servicios AWS (Lambda, DynamoDB, SES) las llamadas también van cifradas con TLS.</li>
+<li>SES envía el correo exigiendo TLS cuando el servidor receptor lo permite.</li>
+</ul>
+</section>
+<section>
+<h2>Seguridad en reposo</h2>
+<ul>
+<li>S3 cifra los archivos por defecto y se bloquea el acceso público: solo CloudFront puede leerlos (Origin Access Control).</li>
+<li>DynamoDB cifra todas las tablas por defecto, sin costo extra. Active también la recuperación a un punto en el tiempo para poder deshacer errores.</li>
+<li>Cognito guarda las contraseñas con hash; no pasan por su código.</li>
+<li>Con las claves administradas por AWS no paga nada. Si el colegio necesita controlar sus propias claves (KMS), cada una cuesta alrededor de 1 USD al mes; verifique el precio vigente.</li>
+</ul>
+</section>
+<section>
+<h2>Controles que lo acompañan</h2>
+<ul>
+<li>Cada Lambda tiene un rol con permisos mínimos: la de citas solo toca su tabla, la de avisos solo envía correos.</li>
+<li>Límite de peticiones por segundo en API Gateway contra abuso. AWS WAF da más protección, pero tiene costo fijo mensual; déjelo para después.</li>
+<li>Verificación del correo al registrarse y, si quiere más protección, segundo factor para profesores y coordinación.</li>
+<li>Los registros de CloudWatch no deben guardar nombres de estudiantes ni motivos de la cita.</li>
+</ul>
+</section>
+<section>
+<h2>Recorrido de una cita</h2>
+<ol>
+<li>El acudiente abre el enlace de la web (se puede compartir por el mismo WhatsApp).</li>
+<li>Inicia sesión con su correo.</li>
+<li>Elige profesor y un horario libre.</li>
+<li>La Lambda reserva el horario.</li>
+<li>Llega el aviso al acudiente y al profesor.</li>
+<li>EventBridge envía el recordatorio antes de la cita.</li>
+</ol>
+</section>
+<section>
+<h2>Costo</h2>
+<p>Con cientos de citas al mes, S3, CloudFront, API Gateway, Lambda, DynamoDB, Cognito y SES suelen costar centavos o caber en las capas gratuitas. Algunas capas gratuitas duran solo el primer año de la cuenta.</p>
+<p>Lo único con costo real es WhatsApp (se cobra por conversación). Empiece con correo y deje WhatsApp para una segunda fase. Confirme precios vigentes en la calculadora de AWS.</p>
+</section>
+<section>
+<h2>Riesgos y decisiones</h2>
+<ul>
+<li>SES arranca en modo de pruebas: hay que pedir salida a producción y verificar el dominio del colegio.</li>
+<li>Si los acudientes no usan correo, avisar con un enlace por WhatsApp desde la cuenta del colegio.</li>
+<li>Los datos son de familias y menores: guarde solo lo necesario. En Colombia aplica la Ley 1581 de 2013 (protección de datos).</li>
+<li>Cada profesor define su disponibilidad en una tabla; sin eso no hay horarios que ofrecer.</li>
+<li>Región recomendada: us-east-1, normalmente la más barata.</li>
+</ul>
+</section>
+<section>
+<h2>Orden de construcción</h2>
+<p>Primero DynamoDB, Lambda y API Gateway con la reserva y la vista del profesor. Luego Cognito y la web. Al final los avisos por SES. Un solo desarrollador puede tener una versión piloto con un grado antes de abrirla a todo el colegio.</p>
+</section>
+</div>
+</main>
+</body>
+</html>

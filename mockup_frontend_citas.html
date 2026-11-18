@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mockup: citas con profesores</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<style>
+body{margin:0;font-family:Inter,system-ui,sans-serif;color:#12263A}
+button,textarea{font-family:inherit}
+.p{width:390px;height:844px;box-sizing:border-box;background:#F4F6F8;display:flex;flex-direction:column}
+.top{background:#12263A;color:#fff;padding:20px;display:flex;align-items:center;gap:12px}
+.top h1{margin:0;font-size:20px;font-weight:700}
+.top p{margin:2px 0 0;font-size:13px;color:#D0DAE3}
+.ic{width:44px;height:44px;border:0;border-radius:22px;background:rgba(255,255,255,.14);color:#fff;display:flex;align-items:center;justify-content:center}
+.body{flex:1;padding:20px;display:flex;flex-direction:column;gap:18px;overflow:hidden}
+.lb{font-size:13px;font-weight:600;color:#4A5B6C;margin:0 0 8px}
+.card{background:#fff;border:1px solid #D8E0E6;border-radius:12px;padding:14px 16px}
+.card h2{margin:0;font-size:16px;font-weight:600}
+.card p{margin:3px 0 0;font-size:14px;color:#4A5B6C}
+.btn{height:52px;border:0;border-radius:12px;background:#0E7C6B;color:#fff;font-size:16px;font-weight:600}
+.btn2{height:44px;border:1px solid #B7C4CE;border-radius:10px;background:#fff;color:#12263A;font-size:14px;font-weight:600;padding:0 16px}
+.days{display:flex;gap:8px}
+.day{flex:1;height:64px;border:1px solid #D8E0E6;border-radius:12px;background:#fff;color:#12263A;font-size:16px;font-weight:600;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
+.day small{font-size:12px;font-weight:500;color:#4A5B6C}
+.day.on{background:#12263A;border-color:#12263A;color:#fff}
+.day.on small{color:#D0DAE3}
+.slots{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.slot{height:48px;border:1px solid #B7C4CE;border-radius:10px;background:#fff;font-size:15px;font-weight:600;color:#12263A}
+.slot.sel{background:#0E7C6B;border-color:#0E7C6B;color:#fff}
+.slot.no{background:#E9EDF1;border-color:#E9EDF1;color:#5E6C79;text-decoration:line-through}
+.hint{margin:8px 0 0;font-size:12px;color:#4A5B6C}
+.chip{display:inline-block;font-size:12px;font-weight:600;padding:4px 10px;border-radius:12px;background:#DDF3EC;color:#0B5E50}
+.chip.w{background:#FDEFD0;color:#7A4B00}
+.row{display:flex;gap:8px;margin-top:12px}
+.tabs{display:flex;background:#E4E9ED;border-radius:12px;padding:4px}
+.tabs button{flex:1;height:40px;border:0;border-radius:9px;background:none;font-size:14px;font-weight:600;color:#4A5B6C}
+.tabs .cur{background:#fff;color:#12263A}
+.nav{display:flex;background:#fff;border-top:1px solid #D8E0E6;height:64px}
+.nav button{flex:1;border:0;background:none;font-size:12px;font-weight:600;color:#4A5B6C}
+.nav .cur{color:#0E7C6B}
+.tl{display:flex;gap:12px;align-items:stretch}
+.tm{width:58px;font-size:13px;font-weight:600;color:#4A5B6C;padding-top:14px}
+.tl .card{flex:1}
+.free{flex:1;border:1px dashed #B7C4CE;border-radius:12px;padding:14px 16px;font-size:14px;color:#4A5B6C}
+
+html{background:#E4E9ED}
+.wrap{display:flex;gap:40px;padding:40px;justify-content:center;flex-wrap:wrap}
+figure{margin:0}
+figcaption{font-size:14px;font-weight:600;color:#4A5B6C;margin-bottom:10px}
+.p{border-radius:20px;overflow:hidden;box-shadow:0 2px 12px rgba(18,38,58,.15)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<figure><figcaption>Acudiente: agendar</figcaption><div class="p">
+<div class="top"><button class="ic" aria-label="Volver"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button><div><h1>Agendar cita</h1><p>Paso 2 de 2: elige día y hora</p></div></div>
+<div class="body">
+<div class="card"><p style="margin:0 0 2px">Cita para</p><h2>Sofía Ramírez · 5.º B</h2><p>Profesor: Martín Gómez, Matemáticas</p></div>
+<div><p class="lb">Día</p>
+<div class="days"><button class="day"><small>Lun</small>23</button><button class="day on" aria-pressed="true"><small>Mar</small>24</button><button class="day"><small>Mié</small>25</button><button class="day"><small>Jue</small>26</button><button class="day"><small>Vie</small>27</button></div></div>
+<div><p class="lb">Hora (noviembre)</p>
+<div class="slots"><button class="slot">2:00 pm</button><button class="slot sel" aria-pressed="true">2:20 pm</button><button class="slot no" disabled>2:40 pm</button><button class="slot">3:00 pm</button><button class="slot no" disabled>3:20 pm</button><button class="slot">3:40 pm</button></div>
+<p class="hint">Los horarios tachados ya los tomó otro acudiente.</p></div>
+<div><label class="lb" for="m" style="display:block">Motivo (opcional)</label>
+<textarea id="m" rows="3" style="width:100%;box-sizing:border-box;border:1px solid #B7C4CE;border-radius:10px;padding:12px;font-size:15px;color:#12263A;resize:none">Quiero hablar sobre las notas del segundo periodo.</textarea></div>
+<button class="btn" style="margin-top:auto">Confirmar cita del 24 a las 2:20 pm</button>
+</div></div></figure>
+<figure><figcaption>Acudiente: mis citas</figcaption><div class="p">
+<div class="top"><div><h1>Mis citas</h1><p>Acudiente de Sofía Ramírez</p></div></div>
+<div class="body" style="gap:14px">
+<div class="tabs"><button class="cur">Próximas</button><button>Pasadas</button></div>
+<div class="card"><span class="chip">Confirmada</span><h2 style="margin-top:10px">Mar 24 nov · 2:20 pm</h2><p>Martín Gómez · Matemáticas</p><p>Motivo: notas del segundo periodo</p>
+<div class="row"><button class="btn2">Reprogramar</button><button class="btn2">Cancelar</button></div></div>
+<div class="card"><span class="chip w">Pendiente de profesor</span><h2 style="margin-top:10px">Jue 26 nov · 3:00 pm</h2><p>Laura Pérez · Lenguaje</p><p>Motivo: tareas atrasadas</p>
+<div class="row"><button class="btn2">Reprogramar</button><button class="btn2">Cancelar</button></div></div>
+<p class="hint" style="margin:0">Le llegará un recordatorio por correo antes de cada cita.</p>
+<button class="btn" style="margin-top:auto">Agendar nueva cita</button>
+</div>
+<div class="nav"><button>Inicio</button><button class="cur" aria-current="page">Mis citas</button><button>Perfil</button></div>
+</div></figure>
+<figure><figcaption>Profesor: agenda</figcaption><div class="p">
+<div class="top"><div><h1>Hola, Martín</h1><p>Martes 24 de noviembre</p></div></div>
+<div class="body" style="gap:14px">
+<div class="tabs"><button class="cur">Hoy</button><button>Semana</button><button>Disponibilidad</button></div>
+<div class="tl"><div class="tm">2:00 pm</div><div class="free">Libre</div></div>
+<div class="tl"><div class="tm">2:20 pm</div><div class="card"><span class="chip">Confirmada</span><h2 style="margin-top:8px">Acudiente de Sofía Ramírez</h2><p>5.º B · notas del segundo periodo</p></div></div>
+<div class="tl"><div class="tm">2:40 pm</div><div class="card"><span class="chip">Confirmada</span><h2 style="margin-top:8px">Acudiente de Tomás Giraldo</h2><p>7.º A · comportamiento en clase</p></div></div>
+<div class="tl"><div class="tm">3:00 pm</div><div class="free">Libre</div></div>
+<div class="tl"><div class="tm">3:20 pm</div><div class="card"><span class="chip w">Por confirmar</span><h2 style="margin-top:8px">Acudiente de Isabela Mejía</h2><p>6.º C · ayuda con refuerzos</p></div></div>
+<button class="btn2" style="margin-top:auto;height:52px">Bloquear un horario</button>
+</div>
+<div class="nav"><button class="cur" aria-current="page">Agenda</button><button>Disponibilidad</button><button>Perfil</button></div>
+</div></figure>
+</div>
+</body>
+</html>

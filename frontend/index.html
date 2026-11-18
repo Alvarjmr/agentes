@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Citas Escolares - Colegio San José</title>
+  
+  <!-- Manifest PWA -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#1d4ed8">
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="bg-slate-100 text-slate-800 min-h-screen antialiased flex flex-col justify-between">
+
+  <!-- ========================================== -->
+  <!-- BARRA DE NAVEGACIÓN PRINCIPAL              -->
+  <!-- ========================================== -->
+  <nav class="bg-blue-700 text-white shadow-md sticky top-0 z-50">
+    <div class="max-w-md mx-auto px-4 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-2.5">
+        <div class="w-8 h-8 rounded-xl bg-white text-blue-700 flex items-center justify-center font-black text-sm shadow">
+          <i class="fa-solid fa-graduation-cap"></i>
+        </div>
+        <div>
+          <h1 class="text-sm font-extrabold tracking-tight leading-tight">Colegio San José</h1>
+          <p class="text-[10px] text-blue-200">Sistema Oficial de Citas</p>
+        </div>
+      </div>
+
+      <!-- Selector de Vista (Acudiente / Docente) -->
+      <div class="flex items-center bg-blue-800/80 p-1 rounded-xl text-xs font-semibold">
+        <button onclick="cambiarVista('acudiente')" id="btn-nav-acudiente" class="px-2.5 py-1 rounded-lg bg-white text-blue-800 shadow transition-all">
+          Acudientes
+        </button>
+        <button onclick="cambiarVista('docente')" id="btn-nav-docente" class="px-2.5 py-1 rounded-lg text-blue-200 hover:text-white transition-all">
+          Profesores
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ========================================== -->
+  <!-- CONTENEDOR MÓVIL CENTRAL                   -->
+  <!-- ========================================== -->
+  <main class="max-w-md mx-auto w-full flex-1 p-4">
+
+    <!-- ======================================== -->
+    <!-- 1. VISTA ACUDIENTE (SOLICITAR CITA)      -->
+    <!-- ======================================== -->
+    <div id="vista-acudiente" class="space-y-4">
+
+      <!-- Banner Informativo -->
+      <div class="p-3.5 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-700 text-white shadow-sm flex items-center gap-3">
+        <div class="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center text-lg shrink-0">
+          <i class="fa-solid fa-calendar-check text-blue-200"></i>
+        </div>
+        <div>
+          <h2 class="text-xs font-bold">Solicita cita sin cruces de horarios</h2>
+          <p class="text-[10px] text-blue-100">Selecciona docente, horario libre y recibe confirmación inmediata.</p>
+        </div>
+      </div>
+
+      <!-- Formulario de Agendamiento -->
+      <form id="form-agendamiento" onsubmit="confirmarCita(event)" class="space-y-4">
+        
+        <!-- Paso 1: Docente -->
+        <div class="space-y-1.5">
+          <label class="text-xs font-bold text-slate-700 flex items-center justify-between">
+            <span>1. Selecciona Docente</span>
+            <span class="text-[10px] text-blue-600 font-semibold">Grado 9°</span>
+          </label>
+          <div id="docentes-container" class="grid grid-cols-1 gap-2">
+            <!-- Inyectado dinámicamente por app.js -->
+          </div>
+        </div>
+
+        <!-- Paso 2: Fecha y Horario -->
+        <div class="space-y-2">
+          <div class="flex items-center justify-between">
+            <label class="text-xs font-bold text-slate-700">2. Elige Fecha y Horario</label>
+            <input type="date" id="input-fecha" onchange="actualizarHorariosDisponibles()" class="px-2 py-1 rounded-lg border border-slate-300 text-xs text-slate-700 bg-white font-medium focus:outline-none focus:border-blue-600">
+          </div>
+
+          <!-- Alerta de Colisión Atómica (Oculta por defecto) -->
+          <div id="alerta-colision" class="hidden p-3 rounded-xl bg-amber-50 border border-amber-300 text-amber-900 text-xs space-y-1 fade-in">
+            <div class="font-bold flex items-center gap-1.5 text-amber-700">
+              <i class="fa-solid fa-shield-cat"></i> Horario recién ocupado
+            </div>
+            <p id="mensaje-colision" class="text-[11px] leading-tight">
+              Otro acudiente acaba de apartar este mismo horario. Por favor selecciona una franja diferente.
+            </p>
+          </div>
+
+          <!-- Grid de Horarios -->
+          <div id="horarios-grid" class="grid grid-cols-3 gap-2">
+            <!-- Inyectado dinámicamente por app.js -->
+          </div>
+        </div>
+
+        <!-- Paso 3: Datos de Contacto -->
+        <div class="p-4 rounded-2xl bg-white border border-slate-200/80 shadow-sm space-y-3">
+          <label class="text-xs font-bold text-slate-700 block border-b pb-2">3. Datos del Acudiente</label>
+
+          <div>
+            <label class="text-[10px] text-slate-500 font-semibold block">Nombre y Apellidos</label>
+            <input type="text" id="input-acudiente" required placeholder="Ej: Carlos Pérez" class="w-full mt-0.5 px-3 py-2 rounded-xl border border-slate-300 text-xs text-slate-800 bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 transition">
+          </div>
+
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="text-[10px] text-slate-500 font-semibold block">Celular / WhatsApp</label>
+              <input type="tel" id="input-telefono" required placeholder="+57 300..." class="w-full mt-0.5 px-3 py-2 rounded-xl border border-slate-300 text-xs text-slate-800 bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 transition">
+            </div>
+            <div>
+              <label class="text-[10px] text-slate-500 font-semibold block">Nombre del Alumno</label>
+              <input type="text" id="input-estudiante" required placeholder="Ej: Juan Pérez" class="w-full mt-0.5 px-3 py-2 rounded-xl border border-slate-300 text-xs text-slate-800 bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 transition">
+            </div>
+          </div>
+
+          <div>
+            <label class="text-[10px] text-slate-500 font-semibold block">Motivo breve (Opcional)</label>
+            <input type="text" id="input-observaciones" placeholder="Ej: Revisión informe periodo 1" class="w-full mt-0.5 px-3 py-2 rounded-xl border border-slate-300 text-xs text-slate-800 bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 transition">
+          </div>
+        </div>
+
+        <!-- Botón de Envío -->
+        <button type="submit" id="btn-submit-cita" class="w-full py-3 rounded-2xl bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-bold text-xs shadow-lg shadow-blue-500/25 transition-all flex items-center justify-center gap-2">
+          <span>Confirmar Cita Inmediata</span>
+          <i class="fa-solid fa-arrow-right"></i>
+        </button>
+
+      </form>
+
+    </div>
+
+    <!-- ======================================== -->
+    <!-- 2. VISTA DOCENTE (ACCESO CON COGNITO)    -->
+    <!-- ======================================== -->
+    <div id="vista-docente" class="hidden space-y-4">
+
+      <!-- Login Docente -->
+      <div id="seccion-login-docente" class="p-6 rounded-3xl bg-white border border-slate-200 shadow-sm space-y-4">
+        <div class="text-center space-y-1">
+          <div class="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 mx-auto flex items-center justify-center text-xl font-bold">
+            <i class="fa-solid fa-user-lock"></i>
+          </div>
+          <h3 class="text-sm font-extrabold text-slate-900">Portal de Docentes</h3>
+          <p class="text-xs text-slate-500">Ingresa con tu correo institucional protegido por Cognito</p>
+        </div>
+
+        <form onsubmit="simularLoginDocente(event)" class="space-y-3">
+          <div>
+            <label class="text-[10px] text-slate-500 font-semibold block">Correo Institucional</label>
+            <input type="email" id="input-docente-email" required value="profesora.claudia@colegio.edu" class="w-full mt-0.5 px-3 py-2 rounded-xl border border-slate-300 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600">
+          </div>
+
+          <div>
+            <label class="text-[10px] text-slate-500 font-semibold block">Contraseña</label>
+            <input type="password" id="input-docente-password" required value="PasswordSeguro123!" class="w-full mt-0.5 px-3 py-2 rounded-xl border border-slate-300 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600">
+          </div>
+
+          <button type="submit" class="w-full py-2.5 rounded-xl bg-blue-700 hover:bg-blue-800 text-white font-bold text-xs shadow-md transition-all">
+            Iniciar Sesión Segura
+          </button>
+        </form>
+      </div>
+
+      <!-- Dashboard del Docente (Autenticado) -->
+      <div id="seccion-dashboard-docente" class="hidden space-y-4">
+        
+        <div class="p-4 rounded-2xl bg-slate-900 text-white flex items-center justify-between">
+          <div>
+            <div class="text-[10px] text-violet-400 font-mono font-bold flex items-center gap-1">
+              <i class="fa-solid fa-shield"></i> SESIÓN SEGURA JWT
+            </div>
+            <h3 id="docente-nombre-header" class="text-sm font-bold text-white mt-0.5">Docente</h3>
+            <p id="docente-materia-header" class="text-xs text-slate-400">Materia</p>
+          </div>
+          <button onclick="cerrarSesionDocente()" class="text-xs text-slate-400 hover:text-rose-400 p-2">
+            <i class="fa-solid fa-arrow-right-from-bracket"></i>
+          </button>
+        </div>
+
+        <div class="space-y-2">
+          <div class="flex items-center justify-between">
+            <h4 class="text-xs font-bold text-slate-700 uppercase tracking-wide">Mis Citas Agendadas</h4>
+            <button onclick="cargarCitasDocente()" class="text-[10px] text-blue-600 font-bold hover:underline">
+              <i class="fa-solid fa-rotate-right"></i> Actualizar
+            </button>
+          </div>
+
+          <div id="lista-citas-docente" class="space-y-2">
+            <!-- Inyectado por app.js -->
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- ========================================== -->
+  <!-- MODAL DE ÉXITO DE CITA                     -->
+  <!-- ========================================== -->
+  <div id="modal-exito" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white max-w-sm w-full rounded-3xl p-6 shadow-2xl text-center space-y-4 fade-in">
+      <div class="w-12 h-12 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-xl mx-auto">
+        <i class="fa-solid fa-check"></i>
+      </div>
+      <div>
+        <h3 class="text-base font-extrabold text-slate-900">¡Cita Confirmada!</h3>
+        <p class="text-xs text-slate-500 mt-1">Tu horario ha sido registrado y asegurado en la base de datos de AWS.</p>
+      </div>
+
+      <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 text-left text-xs space-y-1.5 font-mono">
+        <div>👩‍🏫 <strong>Docente:</strong> <span id="resumen-docente"></span></div>
+        <div>⏰ <strong>Horario:</strong> <span id="resumen-fecha"></span></div>
+        <div>👤 <strong>Acudiente:</strong> <span id="resumen-acudiente"></span></div>
+      </div>
+
+      <button onclick="reiniciarFormulario()" class="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow transition">
+        Aceptar y Volver
+      </button>
+    </div>
+  </div>
+
+  <footer class="bg-slate-200/80 py-3 text-center text-[10px] text-slate-500 border-t border-slate-300">
+    Colegio San José • Infraestructura Serverless AWS Cero Costo Fijo
+  </footer>
+
+  <!-- Scripts -->
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

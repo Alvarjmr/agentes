@@ -1,0 +1,16 @@
+{
+  "name": "citas-escolares-backend",
+  "version": "1.0.0",
+  "description": "Backend Serverless en AWS Lambda para agendamiento de citas escolares",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "node test/local-test.js"
+  },
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.500.0",
+    "@aws-sdk/util-dynamodb": "^3.500.0"
+  },
+  "keywords": ["serverless", "aws", "lambda", "dynamodb", "ciberseguridad"],
+  "author": "Colegio San José",
+  "license": "MIT"
+}

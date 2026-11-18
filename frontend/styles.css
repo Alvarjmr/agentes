@@ -1,0 +1,29 @@
+/* Estilos personalizados de la PWA Móvil */
+
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 0 15px rgba(59, 130, 246, 0.4); }
+  50% { box-shadow: 0 0 25px rgba(59, 130, 246, 0.8); }
+}
+
+.selected-card {
+  border-color: #2563eb !important;
+  background-color: #eff6ff !important;
+  animation: pulseGlow 3s infinite ease-in-out;
+}
+
+.slot-occupied {
+  background-color: #fef2f2 !important;
+  color: #f87171 !important;
+  border-color: #fecaca !important;
+  text-decoration: line-through;
+  cursor: not-allowed !important;
+}
+
+.fade-in {
+  animation: fadeIn 0.3s ease-out forwards;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}

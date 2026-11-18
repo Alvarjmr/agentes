@@ -1,0 +1,10 @@
+# Descomenta este bloque una vez aplicado el bootstrap para habilitar estado remoto en S3
+# terraform {
+#   backend "s3" {
+#     bucket         = "citas-escolares-tfstate-XXXXXXXX" # Nombre generado por bootstrap
+#     key            = "prod/terraform.tfstate"
+#     region         = "us-east-1"
+#     dynamodb_table = "citas-escolares-tf-locks"
+#     encrypt        = true
+#   }
+# }
