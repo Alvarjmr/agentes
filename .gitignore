@@ -1,0 +1,57 @@
+# ==============================================================================
+# Terraform
+# ==============================================================================
+# Directorios de plugins, proveedores y binarios descargados por `terraform init`
+**/.terraform/
+.terraform/
+.terraform.lock.hcl
+
+# Archivos de estado local y backups
+*.tfstate
+*.tfstate.*
+*.tfplan
+*.tfplan.*
+
+# Logs de error y ejecución de Terraform
+crash.log
+crash.*.log
+
+# Archivos de sobrescritura de Terraform
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Archivos de configuración de CLI
+.terraformrc
+terraform.rc
+
+# ==============================================================================
+# Node.js & Dependencias
+# ==============================================================================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json.bak
+
+# ==============================================================================
+# Empaquetado y Artefactos de AWS Lambda
+# ==============================================================================
+*.zip
+backend/lambda_artifact.zip
+
+# ==============================================================================
+# Variables de Entorno y Secretos Locales
+# ==============================================================================
+.env
+.env.*
+*.pem
+
+# ==============================================================================
+# Archivos de Sistema Operativo e IDEs
+# ==============================================================================
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

@@ -182,3 +182,85 @@ jobs:
           echo "🌐 URL Aplicación PWA: ${{ needs.deploy-infrastructure.outputs.cloudfront_url }}"
           echo "📡 API Endpoint:       ${{ needs.deploy-infrastructure.outputs.api_endpoint }}"
           echo "=========================================================="
+
+  # ==============================================================
+  # ETAPA 4: PRUEBAS DE DISPONIBILIDAD (SMOKE TESTS - SITIO ARRIBA)
+  # ==============================================================
+  smoke-tests:
+    name: "4. Comprobar Disponibilidad del Sitio"
+    runs-on: ubuntu-latest
+    needs: [deploy-infrastructure, deploy-backend, deploy-frontend]
+
+    steps:
+      - name: Esperar inicio de propagación (10s)
+        run: sleep 10
+
+      - name: Comprobar que el Frontend PWA responda HTTP 200 (CloudFront CDN)
+        run: |
+          URL="${{ needs.deploy-infrastructure.outputs.cloudfront_url }}"
+          echo "Comprobando disponibilidad de Frontend en: $URL"
+
+          SUCCESS=false
+          for i in {1..6}; do
+            HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "$URL")
+            echo "Intento $i: Código HTTP $HTTP_CODE"
+            if [ "$HTTP_CODE" -eq 200 ]; then
+              SUCCESS=true
+              break
+            fi
+            echo "Esperando propagación... (10s)"
+            sleep 10
+          done
+
+          if [ "$SUCCESS" = false ]; then
+            echo "❌ Error: El Frontend PWA no respondió con 200 OK tras 6 intentos."
+            exit 1
+          fi
+
+          echo "Validando contenido HTML..."
+          CONTENT=$(curl -s "$URL")
+          if echo "$CONTENT" | grep -q "Citas Escolares"; then
+            echo "✅ Frontend verificado exitosamente (PWA activa y contenido intacto)."
+          else
+            echo "⚠️ Advertencia: No se encontró la etiqueta 'Citas Escolares' en el HTML."
+          fi
+
+      - name: Comprobar que el Backend API responda HTTP 200 y CORS 204 (API Gateway + Lambda)
+        run: |
+          RAW_API_URL="${{ needs.deploy-infrastructure.outputs.api_endpoint }}"
+          API_URL="${RAW_API_URL%/}" # Elimina diagonal final si existe
+
+          # 1. Comprobación de ruta pública GET /disponibilidad
+          echo "Probando GET $API_URL/disponibilidad?profesorId=101"
+          API_CODE=$(curl -s -o /dev/null -w "%{http_code}" "$API_URL/disponibilidad?profesorId=101")
+          echo "Código HTTP recibido: $API_CODE"
+          if [ "$API_CODE" -ne 200 ]; then
+            echo "❌ Error: Endpoint de disponibilidad no respondió 200 OK (Código: $API_CODE)"
+            exit 1
+          fi
+          echo "✅ Endpoint /disponibilidad respondió 200 OK."
+
+          # 2. Comprobación de Preflight CORS (OPTIONS /citas)
+          echo "Probando OPTIONS $API_URL/citas"
+          CORS_CODE=$(curl -s -o /dev/null -w "%{http_code}" -X OPTIONS "$API_URL/citas")
+          echo "Código HTTP recibido: $CORS_CODE"
+          if [ "$CORS_CODE" -ne 204 ]; then
+            echo "❌ Error: Preflight CORS OPTIONS no respondió 204 No Content (Código: $CORS_CODE)"
+            exit 1
+          fi
+          echo "✅ Preflight CORS respondió 204 No Content."
+
+      - name: Generar Reporte de Comprobación en GitHub Summary
+        run: |
+          cat << 'EOF' >> $GITHUB_STEP_SUMMARY
+          ## 🌐 Reporte de Despliegue y Disponibilidad del Sitio
+
+          | Componente | Estado | URL / Identificador |
+          |---|---|---|
+          | **Frontend PWA (CloudFront)** | ✅ **ACTIVO (200 OK)** | ${{ needs.deploy-infrastructure.outputs.cloudfront_url }} |
+          | **Backend API (API Gateway + Lambda)** | ✅ **ACTIVO (200 OK)** | ${{ needs.deploy-infrastructure.outputs.api_endpoint }} |
+          | **CORS Preflight** | ✅ **VERIFICADO (204)** | `${{ needs.deploy-infrastructure.outputs.api_endpoint }}/citas` |
+          | **Cognito User Pool** | ✅ **CONFIGURADO** | `${{ needs.deploy-infrastructure.outputs.cognito_user_pool_id }}` |
+
+          > 🚀 **El sitio web móvil y sus microservicios están en línea y verificados con éxito.**
+          EOF
