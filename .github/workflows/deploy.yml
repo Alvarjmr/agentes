@@ -12,7 +12,6 @@ permissions:
 
 env:
   AWS_REGION: ${{ vars.AWS_REGION || 'us-east-1' }}
-  ROLE_TO_ASSUME: ${{ secrets.AWS_ROLE_TO_ASSUME }}
 
 jobs:
   # ==============================================================
@@ -34,10 +33,30 @@ jobs:
       - name: Checkout del Repositorio
         uses: actions/checkout@v4
 
+      - name: Validar Secreto OIDC de AWS
+        run: |
+          if [ -z "${{ secrets.AWS_ROLE_TO_ASSUME }}" ]; then
+            echo "::error title=Falta Secreto AWS_ROLE_TO_ASSUME::El secreto 'AWS_ROLE_TO_ASSUME' no está configurado en GitHub Secrets."
+            echo "=========================================================================="
+            echo "❌ ERROR: No se puede autenticar con AWS sin el rol de IAM OIDC."
+            echo ""
+            echo "Para resolver este fallo:"
+            echo "1. Ejecuta el bootstrap para crear los recursos de OIDC en AWS:"
+            echo "   powershell -File ./bootstrap.ps1"
+            echo "   (o manualmente en ./bootstrap con terraform init && terraform apply)"
+            echo "2. Ve a la configuración de tu repositorio en GitHub:"
+            echo "   https://github.com/Alvarjmr/agentes/settings/secrets/actions"
+            echo "3. Crea un New repository secret con:"
+            echo "   Nombre: AWS_ROLE_TO_ASSUME"
+            echo "   Valor:  arn:aws:iam::<ID_DE_CUENTA>:role/citas-escolares-github-oidc-role"
+            echo "=========================================================================="
+            exit 1
+          fi
+
       - name: Autenticación en AWS mediante OIDC (Zero-Keys)
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ env.ROLE_TO_ASSUME }}
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
           aws-region: ${{ env.AWS_REGION }}
           audience: sts.amazonaws.com
 
@@ -45,6 +64,13 @@ jobs:
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: "1.7.0"
+
+      - name: Verificar Backend de Estado Remoto
+        working-directory: ./terraform
+        run: |
+          if [ ! -f "backend.tf" ]; then
+            echo "::warning title=Estado Local::No se detectó 'backend.tf'. Terraform ejecutará con backend local. Ejecuta bootstrap.ps1 para enlazar S3 remoto."
+          fi
 
       - name: Inicializar Terraform
         working-directory: ./terraform
@@ -95,7 +121,7 @@ jobs:
       - name: Autenticación en AWS mediante OIDC (Zero-Keys)
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ env.ROLE_TO_ASSUME }}
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
           aws-region: ${{ env.AWS_REGION }}
           audience: sts.amazonaws.com
 
@@ -154,7 +180,7 @@ jobs:
       - name: Autenticación en AWS mediante OIDC (Zero-Keys)
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ env.ROLE_TO_ASSUME }}
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
           aws-region: ${{ env.AWS_REGION }}
           audience: sts.amazonaws.com
 

@@ -6,7 +6,7 @@ resource "aws_apigatewayv2_api" "http_api" {
   cors_configuration {
     allow_credentials = false
     allow_headers     = ["Content-Type", "Authorization", "X-Amz-Date", "X-Api-Key", "X-Amz-Security-Token"]
-    allow_methods     = ["GET", "POST", "OPTIONS"]
+    allow_methods     = ["GET", "POST", "OPTIONS", "PATCH"]
     allow_origins     = ["*"] # En producción se puede restringir al dominio de CloudFront
     max_age           = 3600
   }
@@ -48,10 +48,26 @@ resource "aws_apigatewayv2_route" "post_citas" {
   target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
 }
 
-# RUTA B: GET /mis-citas (Protegida exclusivamente para Profesores con JWT de Cognito)
+# RUTA B: GET /disponibilidad (Pública para consultar horarios disponibles)
+resource "aws_apigatewayv2_route" "get_disponibilidad" {
+  api_id    = aws_apigatewayv2_api.http_api.id
+  route_key = "GET /disponibilidad"
+  target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
+}
+
+# RUTA C: GET /mis-citas (Protegida exclusivamente para Profesores con JWT de Cognito)
 resource "aws_apigatewayv2_route" "get_mis_citas" {
   api_id             = aws_apigatewayv2_api.http_api.id
   route_key          = "GET /mis-citas"
+  target             = "integrations/${aws_apigatewayv2_integration.lambda.id}"
+  authorization_type = "JWT"
+  authorizer_id      = aws_apigatewayv2_authorizer.cognito.id
+}
+
+# RUTA D: PATCH /citas (Protegida para Profesores: cambiar estado a ATENDIDA/CANCELADA)
+resource "aws_apigatewayv2_route" "patch_citas" {
+  api_id             = aws_apigatewayv2_api.http_api.id
+  route_key          = "PATCH /citas"
   target             = "integrations/${aws_apigatewayv2_integration.lambda.id}"
   authorization_type = "JWT"
   authorizer_id      = aws_apigatewayv2_authorizer.cognito.id

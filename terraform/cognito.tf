@@ -45,8 +45,8 @@ resource "aws_cognito_user_pool_client" "pwa_client" {
   generate_secret = false # Aplicación SPA/PWA móvil pública
 
   explicit_auth_flows = [
-    "ALLOW_USER_SRP_AUTH",        # Secure Remote Password: la clave nunca viaja por la red
-    "ALLOW_REFRESH_TOKEN_AUTH",   # Renovación de sesión segura
+    "ALLOW_USER_SRP_AUTH",      # Secure Remote Password: la clave nunca viaja por la red
+    "ALLOW_REFRESH_TOKEN_AUTH", # Renovación de sesión segura
     "ALLOW_USER_PASSWORD_AUTH"
   ]
 
