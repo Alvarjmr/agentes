@@ -62,25 +62,26 @@ try {
     if ($LASTEXITCODE -ne 0) { throw "Fallo terraform apply" }
 
     # Obtener outputs
-    $roleArn     = (terraform output -raw github_actions_role_arn).Trim()
-    $stateBucket = (terraform output -raw terraform_state_bucket).Trim()
-    $lockTable   = (terraform output -raw terraform_lock_table).Trim()
-    $region      = (terraform output -raw aws_region).Trim()
+    $roleArn     = "$(terraform output -raw github_actions_role_arn)".Trim()
+    $stateBucket = "$(terraform output -raw terraform_state_bucket)".Trim()
+    $lockTable   = "$(terraform output -raw terraform_lock_table)".Trim()
+    $region      = "$(terraform output -raw aws_region)".Trim()
 } finally {
     Pop-Location
 }
 
 # 4. Configurar terraform/backend.tf
 Write-Host "`n[4/5] Configurando backend remoto en ./terraform/backend.tf..." -ForegroundColor Yellow
+$lockLine = if ($lockTable) { "    dynamodb_table = `"$lockTable`"" } else { "    use_lockfile   = true" }
 $backendContent = @"
 # Generado automáticamente por bootstrap.ps1
 terraform {
   backend "s3" {
-    bucket         = "$stateBucket"
-    key            = "prod/terraform.tfstate"
-    region         = "$region"
-    dynamodb_table = "$lockTable"
-    encrypt        = true
+    bucket       = "$stateBucket"
+    key          = "prod/terraform.tfstate"
+    region       = "$region"
+$lockLine
+    encrypt      = true
   }
 }
 "@
@@ -100,8 +101,8 @@ Write-Host "  - Rol IAM OIDC (GitHub Actions): $roleArn" -ForegroundColor Gray
 Write-Host "  - Región:                       $region" -ForegroundColor Gray
 
 Write-Host "`n👉 PASO SIGUIENTE OBLIGATORIO EN GITHUB:" -ForegroundColor Yellow
-Write-Host "Ve a tu repositorio en GitHub:" -ForegroundColor White
-Write-Host "https://github.com/Alvarjmr/agentes/settings/secrets/actions" -ForegroundColor Cyan
+Write-Host "Ve a la configuración de tu(s) repositorio(s) en GitHub (ej. https://github.com/Alvarjmr/<repo>/settings/secrets/actions):" -ForegroundColor White
+Write-Host "Este rol OIDC y el backend S3/DynamoDB quedan habilitados para todos tus repositorios bajo la cuenta configurada." -ForegroundColor Cyan
 Write-Host "`nAgrega los siguientes secretos/variables de repositorio:" -ForegroundColor White
 Write-Host "--------------------------------------------------------" -ForegroundColor Gray
 Write-Host "1. Secret: AWS_ROLE_TO_ASSUME" -ForegroundColor White

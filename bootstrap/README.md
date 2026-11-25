@@ -10,10 +10,10 @@ Esta fase se ejecuta **una sola vez de forma manual** (o mediante credenciales d
 ## 🚀 Cómo Ejecutar el Bootstrap
 
 ### 1. Configurar variables en `terraform.tfvars` (Opcional)
-Edita `variables.tf` o crea un archivo `terraform.tfvars` indicando tu usuario y repositorio de GitHub:
+Edita `variables.tf` o `terraform.tfvars` indicando tu usuario/organización de GitHub. Por defecto `github_repo = "*"` permite que **todos** los repositorios bajo `github_org` utilicen este mismo rol OIDC y backend S3 (usando una `key` distinta en `backend.tf` por proyecto):
 ```hcl
-github_org  = "tu-usuario-o-organizacion"
-github_repo = "tu-repositorio-citas"
+github_org  = "Alvarjmr"
+github_repo = "*"
 aws_region  = "us-east-1"
 ```
 

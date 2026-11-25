@@ -9,8 +9,8 @@ output "terraform_state_bucket" {
 }
 
 output "terraform_lock_table" {
-  description = "Nombre de la tabla DynamoDB para bloqueo concurrente de estado"
-  value       = aws_dynamodb_table.terraform_locks.name
+  description = "Nombre de la tabla DynamoDB para bloqueo concurrente de estado (vacío si usa S3 use_lockfile)"
+  value       = var.enable_dynamodb_lock ? aws_dynamodb_table.terraform_locks[0].name : ""
 }
 
 output "aws_region" {

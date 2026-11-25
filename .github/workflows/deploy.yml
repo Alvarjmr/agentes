@@ -63,7 +63,7 @@ jobs:
       - name: Instalar Terraform
         uses: hashicorp/setup-terraform@v3
         with:
-          terraform_version: "1.7.0"
+          terraform_version: "1.11.4"
 
       - name: Verificar Backend de Estado Remoto
         working-directory: ./terraform

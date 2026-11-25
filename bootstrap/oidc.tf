@@ -1,11 +1,11 @@
 # 1. Proveedor OIDC de GitHub en AWS (Solo se crea una vez en la cuenta)
-# Si ya existe en la cuenta, se puede reutilizar o importar
 data "aws_iam_openid_connect_provider" "existing_github" {
-  count = 0 # Cambiar a 1 si ya existe en la cuenta
+  count = var.create_oidc_provider ? 0 : 1
   url   = "https://token.actions.githubusercontent.com"
 }
 
 resource "aws_iam_openid_connect_provider" "github" {
+  count           = var.create_oidc_provider ? 1 : 0
   url             = "https://token.actions.githubusercontent.com"
   client_id_list  = ["sts.amazonaws.com"]
   thumbprint_list = [
@@ -16,6 +16,10 @@ resource "aws_iam_openid_connect_provider" "github" {
   tags = {
     Name = "GitHubActionsOIDCProvider"
   }
+}
+
+locals {
+  oidc_provider_arn = var.create_oidc_provider ? aws_iam_openid_connect_provider.github[0].arn : data.aws_iam_openid_connect_provider.existing_github[0].arn
 }
 
 # 2. Rol IAM Asumible mediante OIDC por GitHub Actions (Sin llaves permanentes)
@@ -29,7 +33,7 @@ resource "aws_iam_role" "github_actions_role" {
       {
         Effect = "Allow"
         Principal = {
-          Federated = aws_iam_openid_connect_provider.github.arn
+          Federated = local.oidc_provider_arn
         }
         Action = "sts:AssumeRoleWithWebIdentity"
         Condition = {
@@ -37,7 +41,7 @@ resource "aws_iam_role" "github_actions_role" {
             "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com"
           }
           StringLike = {
-            # Restricción estricta: Solo el repositorio del proyecto puede asumir el rol
+            # Permite a todos los repositorios configurados bajo github_org asumir el rol (github_repo = "*" para todos)
             "token.actions.githubusercontent.com:sub" = "repo:${var.github_org}/${var.github_repo}:*"
           }
         }
@@ -82,9 +86,9 @@ resource "aws_iam_policy" "pipeline_policy" {
           "dynamodb:PutItem",
           "dynamodb:DeleteItem"
         ]
-        Resource = aws_dynamodb_table.terraform_locks.arn
+        Resource = var.enable_dynamodb_lock ? aws_dynamodb_table.terraform_locks[0].arn : "arn:aws:dynamodb:${var.aws_region}:*:table/${var.project_name}-tf-locks"
       },
-      # Permisos para aprovisionar los servicios de la arquitectura escolar
+      # Permisos para aprovisionar los servicios de los repositorios (Serverless, EC2, ASG, ALB, CloudWatch)
       {
         Sid    = "DeploySchoolServices"
         Effect = "Allow"
@@ -92,17 +96,24 @@ resource "aws_iam_policy" "pipeline_policy" {
           # S3 y CloudFront (Frontend)
           "s3:*",
           "cloudfront:*",
-          # Cómputo y Gateway
+          # Cómputo Serverless y Gateway
           "lambda:*",
           "apigateway:*",
+          # Cómputo EC2, Redes, Balanceo de Carga y Auto Scaling
+          "ec2:*",
+          "autoscaling:*",
+          "elasticloadbalancing:*",
           # Base de Datos
           "dynamodb:*",
-          # Seguridad y Criptografía
+          # Seguridad, Criptografía e Identidad
           "cognito-idp:*",
           "kms:*",
+          "ssm:*",
+          "sts:GetCallerIdentity",
           "iam:CreateRole",
           "iam:DeleteRole",
           "iam:GetRole",
+          "iam:ListRoles",
           "iam:PassRole",
           "iam:PutRolePolicy",
           "iam:GetRolePolicy",
@@ -116,11 +127,29 @@ resource "aws_iam_policy" "pipeline_policy" {
           "iam:GetPolicy",
           "iam:GetPolicyVersion",
           "iam:ListPolicyVersions",
+          "iam:CreatePolicyVersion",
+          "iam:DeletePolicyVersion",
+          "iam:SetDefaultPolicyVersion",
+          "iam:ListPolicies",
           "iam:TagRole",
           "iam:UntagRole",
           "iam:TagPolicy",
-          # Monitoreo
-          "logs:*"
+          "iam:UntagPolicy",
+          "iam:CreateInstanceProfile",
+          "iam:DeleteInstanceProfile",
+          "iam:GetInstanceProfile",
+          "iam:ListInstanceProfiles",
+          "iam:ListInstanceProfilesForRole",
+          "iam:AddRoleToInstanceProfile",
+          "iam:RemoveRoleFromInstanceProfile",
+          "iam:TagInstanceProfile",
+          "iam:UntagInstanceProfile",
+          "iam:CreateServiceLinkedRole",
+          # Monitoreo, Alarmas y Notificaciones
+          "cloudwatch:*",
+          "logs:*",
+          "sns:*",
+          "tag:*"
         ]
         Resource = "*"
       }

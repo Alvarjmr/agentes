@@ -17,13 +17,25 @@ variable "github_org" {
 }
 
 variable "github_repo" {
-  description = "Nombre del repositorio de GitHub (ej: 'citas-escolares-aws')."
+  description = "Nombre del repositorio de GitHub (usa '*' para permitir todos los repositorios de github_org)."
   type        = string
-  default     = "citas-escolares-aws"
+  default     = "*"
 }
 
 variable "github_branch" {
   description = "Rama principal que tiene autorización para desplegar en AWS."
   type        = string
   default     = "main"
+}
+
+variable "create_oidc_provider" {
+  description = "Crear el proveedor OIDC de GitHub (false si ya existe en la cuenta AWS)."
+  type        = bool
+  default     = false
+}
+
+variable "enable_dynamodb_lock" {
+  description = "Crear tabla DynamoDB para state locking (false usa S3 use_lockfile nativo de Terraform >= 1.10)."
+  type        = bool
+  default     = false
 }

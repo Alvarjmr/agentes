@@ -44,8 +44,9 @@ resource "aws_s3_bucket_public_access_block" "state_public_block" {
   restrict_public_buckets = true
 }
 
-# 2. Tabla DynamoDB para Bloqueo Concurrente de Estado (State Locking)
+# 2. Tabla DynamoDB opcional para Bloqueo Concurrente de Estado (State Locking)
 resource "aws_dynamodb_table" "terraform_locks" {
+  count        = var.enable_dynamodb_lock ? 1 : 0
   name         = "${var.project_name}-tf-locks"
   billing_mode = "PAY_PER_REQUEST" # Free tier ($0)
   hash_key     = "LockID"
