@@ -29,9 +29,9 @@ variable "github_branch" {
 }
 
 variable "create_oidc_provider" {
-  description = "Crear el proveedor OIDC de GitHub (false si ya existe en la cuenta AWS)."
+  description = "Crear/gestionar el proveedor OIDC de GitHub (importar si ya existe en la cuenta AWS)."
   type        = bool
-  default     = false
+  default     = true
 }
 
 variable "enable_dynamodb_lock" {
